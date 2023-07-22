@@ -5,8 +5,9 @@
   "documentation": "https://github.com/rado0x54/ha-carson-living/blob/master/README.md",
   "issue_tracker": "https://github.com/rado0x54/ha-carson-living/issues",
   "requirements": [
-    "carson_living==0.0.5"
+    "carson_living==0.0.6"
   ],
+  "version": "0.0.2",
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
