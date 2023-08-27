@@ -4,7 +4,7 @@
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/carson",
   "requirements": [
-    "c-l-testing==0.1.3"
+    "c-l-testing==2.1.3"
   ],
   "version": "0.0.3",
   "ssdp": [],
