@@ -31,7 +31,6 @@ CONFIG_SCHEMA = vol.Schema(
 
 PLATFORMS = ["lock", "camera"]
 
-
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the Carson component."""
     _LOGGER.debug("async def async_setup(hass: HomeAssistant, config: dict) called")
@@ -49,7 +48,6 @@ async def async_setup(hass: HomeAssistant, config: dict):
         )
     )
     return True
-
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up Carson from a config entry."""
@@ -90,6 +88,40 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
 
+    async def async_update_rtsp_url(call):
+        """Update the RTSP URL for the specified camera."""
+        entity_id = call.data.get("entity_id")
+        camera = hass.data[DOMAIN].get(entity_id)
+        if camera:
+            rtsp_url = await hass.async_add_executor_job(camera.get_rtsp_url)
+            # We'll need to implement a method in the camera entity in Home Assistant
+            # to update its RTSP URL. We'll handle this in the next steps.
+            camera.update_rtsp_url(rtsp_url)
+
+    # Register the service
+    hass.services.async_register(DOMAIN, "update_rtsp_url", async_update_rtsp_url)
+
+    async def async_enable_rtsp(call):
+        """Enable RTSP for the specified camera."""
+        entity_id = call.data.get("entity_id")
+        camera = hass.data[DOMAIN].get(entity_id)
+        if camera:
+            await hass.async_add_executor_job(camera.enable_rtsp)
+
+    # Register the service
+    hass.services.async_register(DOMAIN, "enable_rtsp", async_enable_rtsp)
+
+    async def async_disable_rtsp(call):
+        """Disable RTSP and use the original method for the specified camera."""
+        entity_id = call.data.get("entity_id")
+        camera = hass.data[DOMAIN].get(entity_id)
+        if camera:
+            await hass.async_add_executor_job(camera.disable_rtsp)
+
+    # Register the service
+    hass.services.async_register(DOMAIN, "disable_rtsp", async_disable_rtsp)
+
+
     if hass.services.has_service(DOMAIN, "update"):
         return True
 
@@ -105,7 +137,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.services.async_register(DOMAIN, "update", async_carson_api)
 
     return True
-
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""

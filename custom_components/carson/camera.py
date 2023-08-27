@@ -1,7 +1,8 @@
 """This component provides support to the Ring Door Bell camera."""
 from datetime import timedelta
-import io
 import logging
+import io
+from PIL import Image
 
 from homeassistant.components.camera import SUPPORT_STREAM, Camera
 from homeassistant.const import ATTR_ATTRIBUTION
@@ -46,6 +47,8 @@ class EagleEyeCamera(CarsonEntityMixin, Camera):
         super().__init__(config_entry_id, ee_camera)
         self._ee_camera = ee_camera
         self._hass = hass
+        self._use_rtsp = False
+        self._rtsp_url = None
 
     @property
     def name(self):
@@ -64,12 +67,39 @@ class EagleEyeCamera(CarsonEntityMixin, Camera):
             "timezone": self._ee_camera.timezone,
         }
 
-    def camera_image(self):
+    def enable_rtsp(self):
+        """Enable RTSP streaming."""
+        self._use_rtsp = True
+
+    def disable_rtsp(self):
+        """Disable RTSP and revert to the original streaming method."""
+        self._use_rtsp = False
+
+    def camera_image(self, width=None, height=None):
         """Return bytes of camera image."""
-        _LOGGER.debug("Getting live camera image for %s", self.name)
-        buffer = io.BytesIO()
-        self._ee_camera.get_image(buffer)
-        return buffer.getvalue()
+        if not self._use_rtsp:
+            _LOGGER.debug("Getting live camera image for %s", self.name)
+            buffer = io.BytesIO()
+            self._ee_camera.get_image(buffer)
+            image = Image.open(buffer)
+            if width is not None:
+                # Calculate the new height to maintain the aspect ratio
+                height = int(image.height * width / image.width)
+                image = image.resize((width, height))
+            new_buffer = io.BytesIO()
+            image.save(new_buffer, format='JPEG')
+            return new_buffer.getvalue()
+        # Add logic for RTSP here if needed
+
+    async def stream_source(self):
+        """Return the stream source."""
+        if self._use_rtsp:
+            return self._rtsp_url
+        return await self._hass.async_add_executor_job(self._ee_camera.get_video_url, timedelta(minutes=30))
+
+    def update_rtsp_url(self, url):
+        """Update the RTSP URL."""
+        self._rtsp_url = url
 
     @property
     def supported_features(self):
@@ -79,7 +109,7 @@ class EagleEyeCamera(CarsonEntityMixin, Camera):
     async def stream_source(self):
         """Return the stream source."""
         _LOGGER.debug("Getting live camera video stream for %s", self.name)
-        return await self._hass.async_add_executor_job(self._ee_camera.get_video_url, timedelta(minutes=5))
+        return await self._hass.async_add_executor_job(self._ee_camera.get_video_url, timedelta(minutes=30))
 
     def turn_off(self):
         """Turn off camera."""
