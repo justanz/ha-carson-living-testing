@@ -128,7 +128,7 @@ class CarsonOptionsFlowHandler(config_entries.OptionsFlow):
                         default=self.config_entry.options.get(
                             CONF_LIST_FROM_EAGLE_EYE, DEFAULT_CONF_LIST_FROM_EAGLE_EYE
                         ),
-                    ): bool,
+                    ): vol.Boolean(title="Import all camera entities"),
                 }
             ),
         )
