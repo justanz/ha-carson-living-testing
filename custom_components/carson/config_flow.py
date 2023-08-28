@@ -123,12 +123,13 @@ class CarsonOptionsFlowHandler(config_entries.OptionsFlow):
             step_id="carson_devices",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(
+                    vol.Required(
                         CONF_LIST_FROM_EAGLE_EYE,
+                        description="Import all camera entities",
                         default=self.config_entry.options.get(
                             CONF_LIST_FROM_EAGLE_EYE, DEFAULT_CONF_LIST_FROM_EAGLE_EYE
                         ),
-                    ): vol.Boolean(title="Import all camera entities"),
+                    ): bool,
                 }
             ),
         )
